@@ -197,14 +197,14 @@
             border: 1px solid #333 !important; 
             color: #000 !important; 
             padding: 6px 4px !important;
-            font-size: 10pt !important; /* 全体的に文字を少し小さく */
+            font-size: 10pt !important;
         }
 
         /* 国籍別などの列見出しの折り返し設定 */
         body.pdf-export-mode thead th {
             white-space: normal !important;
             word-wrap: break-word !important;
-            font-size: 9pt !important; /* 見出しはさらに小さくして収まりを良くする */
+            font-size: 9pt !important; 
             line-height: 1.1 !important;
             min-width: 50px !important;
         }
@@ -449,7 +449,8 @@
                 if (!row || !row[colComp] || String(row[colComp]).trim() === "") continue;
 
                 const statusRaw = String(row[colStat] || "");
-                const exclude = ['帰国', '退職', '失踪', '辞退', 'キャンセル', 'ｷｬﾝｾﾙ', 'IVY', '満了後、他社へ'];
+                // 除外判定：他社へ を含む場合はスキップ
+                const exclude = ['帰国', '退職', '失踪', '辞退', 'キャンセル', 'ｷｬﾝｾﾙ', 'IVY', '他社へ'];
                 if (exclude.some(k => statusRaw.includes(k) && !statusRaw.includes('予定'))) continue;
 
                 let status = null;
