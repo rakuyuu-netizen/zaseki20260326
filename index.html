@@ -449,8 +449,11 @@
                 if (!row || !row[colComp] || String(row[colComp]).trim() === "") continue;
 
                 const statusRaw = String(row[colStat] || "");
-                // 除外判定：他社へ を含む場合はスキップ
-                const exclude = ['帰国', '退職', '失踪', '辞退', 'キャンセル', 'ｷｬﾝｾﾙ', 'IVY', '他社へ'];
+                // 除外判定：特定のキーワードが含まれる場合はスキップ
+                const exclude = [
+                    '帰国', '退職', '失踪', '辞退', 'キャンセル', 'ｷｬﾝｾﾙ', 
+                    'IVY', '他社へ', '他組合へ移管', '他監理'
+                ];
                 if (exclude.some(k => statusRaw.includes(k) && !statusRaw.includes('予定'))) continue;
 
                 let status = null;
