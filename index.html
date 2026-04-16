@@ -3,636 +3,813 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外国人材 在籍数集計表</title>
-    <!-- Materialize CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        body {
-            background-color: #eceff1;
-            color: #37474f;
-            font-family: 'Roboto', 'Noto Sans JP', sans-serif;
-        }
-        .navbar-custom { background-color: #455a64 !important; }
-        .card-custom {
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        /* --- テーブル・マトリクスのスタイル --- */
-        .table-wrapper {
-            max-height: 60vh;
-            overflow: auto;
-            position: relative;
-        }
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            background-color: #ffffff;
-        }
-        th, td {
-            border-right: 1px solid #b0bec5;
-            border-bottom: 1px solid #b0bec5;
-            text-align: center;
-            vertical-align: middle;
-            padding: 8px 5px;
-        }
-        table { border-left: 1px solid #b0bec5; border-top: 1px solid #b0bec5; }
-        
-        .table-wrapper table th:not(.sticky-col-no):not(.sticky-col-company):not([colspan]),
-        .table-wrapper table td:not(.sticky-col-no):not(.sticky-col-company) {
-            min-width: 70px;
-            width: 70px;
-            max-width: 70px;
-            height: 48px;
-            white-space: normal;
-            word-wrap: break-word;
-            line-height: 1.3;
-        }
-
-        thead th {
-            position: sticky;
-            background-color: #cfd8dc;
-            color: #263238;
-            font-weight: bold;
-            z-index: 10;
-        }
-        thead tr:nth-child(1) th { top: 0; height: 40px; }
-        thead tr:nth-child(2) th { top: 40px; height: 40px; }
-
-        tfoot th {
-            position: sticky;
-            bottom: 0;
-            background-color: #b0bec5;
-            color: #1a237e;
-            font-weight: bold;
-            z-index: 10;
-            border-top: 2px solid #78909c;
-        }
-
-        .sticky-col-no {
-            position: sticky;
-            left: 0;
-            background-color: #f5f7f8;
-            font-weight: bold;
-            text-align: center;
-            min-width: 40px;
-            width: 40px;
-            max-width: 40px;
-            z-index: 5;
-        }
-        .sticky-col-company {
-            position: sticky;
-            left: 40px;
-            background-color: #f5f7f8;
-            font-weight: bold;
-            text-align: left;
-            min-width: 200px;
-            width: 200px;
-            max-width: 200px;
-            white-space: normal;
-            word-wrap: break-word;
-            z-index: 5;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
-        }
-        thead th.sticky-col-no, thead th.sticky-col-company { z-index: 15; background-color: #b0bec5; }
-        tfoot th.sticky-col-no { z-index: 15; background-color: #90a4ae; border-right: none;}
-        tfoot th.sticky-col-company { z-index: 15; background-color: #90a4ae; text-align: right; padding-right: 15px;}
-
-        .total-col { background-color: #e8eaf6; font-weight: bold; color: #283593; }
-        thead th.total-col { background-color: #c5cae9; }
-
-        .tabs.custom-tabs { 
-            background-color: transparent; 
-            border-bottom: 1px solid #cfd8dc; 
-        }
-        .tabs.custom-tabs .tab a { 
-            color: #546e7a !important; 
-            font-weight: bold; 
-            transition: background-color .3s;
-        }
-        .tabs.custom-tabs .tab a:hover { 
-            color: #455a64 !important; 
-            background-color: rgba(69, 90, 100, 0.05); 
-        }
-        .tabs.custom-tabs .tab a.active { 
-            color: #263238 !important; 
-            background-color: rgba(69, 90, 100, 0.1); 
-        }
-        .tabs.custom-tabs .indicator { 
-            background-color: #455a64 !important; 
-            height: 3px; 
-        }
-
-        .btn-custom { background-color: #546e7a !important; }
-        .btn-excel { background-color: #2e7d32 !important; } 
-        
-        .clickable-cell {
-            cursor: pointer;
-            color: #1976d2;
-            text-decoration: underline;
-            font-weight: bold;
-        }
-        .clickable-cell:hover { background-color: #e3f2fd !important; }
-
-        /* =========================================
-           PDF保存 用の出力スタイル (A4縦)
-           ========================================= */
-        .print-title, .print-date { display: none; }
-
-        body.pdf-export-mode { 
-            background-color: #fff !important; 
-            overflow: visible !important;
-        }
-        body.pdf-export-mode nav, 
-        body.pdf-export-mode .card:first-of-type, 
-        body.pdf-export-mode .tabs, 
-        body.pdf-export-mode .btn-print,
-        body.pdf-export-mode .toast,
-        body.pdf-export-mode #toast-container { display: none !important; }
-        
-        body.pdf-export-mode .container { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
-        body.pdf-export-mode .card-custom { box-shadow: none !important; border: none !important; margin: 0 !important; background-color: transparent !important; }
-        body.pdf-export-mode .card-content { padding: 0 !important; overflow: visible !important; }
-
-        body.pdf-export-mode #tab-trainee, 
-        body.pdf-export-mode #tab-ssw, 
-        body.pdf-export-mode #tab-total {
-            display: block !important; 
-            visibility: visible !important; 
-            height: auto !important; 
-            padding: 30px !important; 
-            width: max-content !important; 
-            min-width: 1300px; 
-            background-color: #fff !important;
-            opacity: 1 !important;
-        }
-        
-        body.pdf-export-mode .print-title { display: block !important; text-align: center; font-size: 20pt; font-weight: bold; margin-bottom: 20px; color: #000; }
-        body.pdf-export-mode .print-date { display: block !important; text-align: right; font-size: 14pt; margin-top: 20px; color: #000; }
-        
-        body.pdf-export-mode .table-wrapper { 
-            max-height: none !important; 
-            overflow: visible !important; 
-        }
-        
-        body.pdf-export-mode thead th,
-        body.pdf-export-mode tfoot th,
-        body.pdf-export-mode .sticky-col-no,
-        body.pdf-export-mode .sticky-col-company {
-            position: static !important;
-            box-shadow: none !important;
-        }
-
-        body.pdf-export-mode table { 
-            border-collapse: collapse !important; 
-            width: max-content !important; 
-            border: 1.5px solid #000 !important; 
-            table-layout: auto !important;
-        }
-        
-        body.pdf-export-mode th, body.pdf-export-mode td { 
-            border: 1px solid #333 !important; 
-            color: #000 !important; 
-            padding: 6px 4px !important;
-            font-size: 10pt !important;
-        }
-
-        /* 国籍別などの列見出しの折り返し設定 */
-        body.pdf-export-mode thead th {
-            white-space: normal !important;
-            word-wrap: break-word !important;
-            font-size: 9pt !important; 
-            line-height: 1.1 !important;
-            min-width: 50px !important;
-        }
-
-        /* 企業名列のはみ出し防止 */
-        body.pdf-export-mode td.sticky-col-company,
-        body.pdf-export-mode th.sticky-col-company {
-            white-space: normal !important;
-            word-wrap: break-word !important;
-            max-width: 240px !important;
-            width: 240px !important;
-            text-align: left !important;
-            line-height: 1.2 !important;
-        }
-
-        /* データセルは基本折り返さないが見切れも許容しない */
-        body.pdf-export-mode td:not(.sticky-col-company) {
-            white-space: nowrap !important;
-        }
-    </style>
-</head>
-<body>
-
-    <nav class="navbar-custom">
-        <div class="nav-wrapper container">
-            <a href="#" class="brand-logo" style="font-size: 1.5rem;"><i class="material-icons">grid_on</i> 外国人材 集計表</a>
-        </div>
-    </nav>
-
-    <div class="container" style="margin-top: 20px; width: 98%; max-width: 1600px;">
-        <div class="card card-custom">
-            <div class="card-content">
-                <span class="card-title" style="font-weight: bold;"><i class="material-icons left">file_upload</i>Excel読み込み</span>
-                <p style="color: #546e7a; margin-bottom: 15px;">
-                    対象のExcelファイルを選択してください。特定技能の各シートは指定の列を優先的に集計します。
-                </p>
-                <div class="file-field input-field">
-                    <div class="btn btn-custom"><span>ファイルを選択</span><input type="file" id="excelFileInput" accept=".xlsx, .xls"></div>
-                    <div class="file-path-wrapper"><input class="file-path validate" type="text" placeholder="Excelファイルを選択してください"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card card-custom">
-            <div class="card-content" style="padding: 0;">
-                <div class="row" style="margin-bottom: 0;">
-                    <div class="col s12 m8">
-                        <ul class="tabs custom-tabs">
-                            <li class="tab col s4"><a href="#tab-trainee" class="active">技能実習</a></li>
-                            <li class="tab col s4"><a href="#tab-ssw">特定技能・特定活動</a></li>
-                            <li class="tab col s4"><a href="#tab-total">総合計</a></li>
-                        </ul>
-                    </div>
-                    <div class="col s12 m4 right-align" style="margin-top: 5px; padding-right: 20px;">
-                        <button class="btn waves-effect waves-light btn-custom" onclick="downloadPDF()"><i class="material-icons left">picture_as_pdf</i>PDF保存</button>
-                    </div>
-
-                    <div id="export-container">
-                        <div id="tab-trainee" class="col s12">
-                            <div class="print-title">外国人材 在籍数集計表 【技能実習】</div>
-                            <div class="table-wrapper"><table><thead id="thead-trainee"></thead><tbody id="tbody-trainee"></tbody><tfoot id="tfoot-trainee"></tfoot></table></div>
-                            <div class="print-date"></div>
-                        </div>
-                        <div id="tab-ssw" class="col s12">
-                            <div class="print-title">外国人材 在籍数集計表 【特定技能・特定活動】</div>
-                            <div class="table-wrapper"><table><thead id="thead-ssw"></thead><tbody id="tbody-ssw"></tbody><tfoot id="tfoot-ssw"></tfoot></table></div>
-                            <div class="print-date"></div>
-                        </div>
-                        <div id="tab-total" class="col s12">
-                            <div class="print-title">外国人材 在籍数集計表 【総合計】</div>
-                            <div class="table-wrapper"><table><thead id="thead-total"></thead><tbody id="tbody-total"></tbody><tfoot id="tfoot-total"></tfoot></table></div>
-                            <div class="print-date"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 詳細モーダル -->
-    <div id="detailModal" class="modal modal-fixed-footer" style="width: 90%; max-height: 80%;">
-        <div class="modal-content">
-            <h5 id="modalTitle" style="font-weight: bold; color: #37474f;">詳細一覧</h5>
-            <table class="striped highlight">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>企業名</th>
-                        <th>名前</th>
-                        <th>国籍</th>
-                        <th>在留資格</th>
-                        <th>シート名</th>
-                        <th>Excel行</th>
-                    </tr>
-                </thead>
-                <tbody id="modalTableBody"></tbody>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <button class="btn waves-effect waves-light btn-excel" onclick="exportModalToExcel()" style="margin-right: 10px;">
-                <i class="material-icons left">file_download</i>Excel出力
-            </button>
-            <a href="#!" class="modal-close waves-effect btn-flat">閉じる</a>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>在籍状況集計ダッシュボード</title>
+    <!-- Tailwind CSS (スタイリング用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS (Excel読み込み用) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- Lucide Icons (アイコン用) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PDF生成用ライブラリ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <script>
-        let records = [];
-        let companyMaster = [];
-        let nationalityMaster = [];
-        let currentModalFilteredData = []; 
-        let currentModalTitle = ""; 
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        /* カスタムスクロールバー (モダン) */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* 固定列の影 */
+        .sticky-shadow-right { box-shadow: 4px 0 12px -4px rgba(0,0,0,0.05); }
+        /* クリック可能なセルのスタイル */
+        .clickable-cell { cursor: pointer; transition: background-color 0.15s, transform 0.1s; }
+        .clickable-cell:hover { background-color: #eff6ff !important; transform: scale(0.98); border-radius: 4px; box-shadow: inset 0 0 0 1px #bfdbfe; }
+        .clickable-cell:active { transform: scale(0.95); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            M.Tabs.init(document.querySelectorAll('.tabs'));
-            M.Modal.init(document.querySelectorAll('.modal'));
-            renderMatrixTables();
+        /* PDF出力用：透過・ぼかし効果を無効化して文字をくっきりさせる */
+        body.pdf-exporting * {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        body.pdf-exporting .bg-white\/90, 
+        body.pdf-exporting .bg-white\/80 { background-color: #ffffff !important; }
+        body.pdf-exporting .bg-slate-50\/90, 
+        body.pdf-exporting .bg-slate-50\/80 { background-color: #f8fafc !important; }
+        body.pdf-exporting .bg-blue-50\/90, 
+        body.pdf-exporting .bg-blue-50\/80 { background-color: #eff6ff !important; }
+        body.pdf-exporting .bg-emerald-50\/90, 
+        body.pdf-exporting .bg-emerald-50\/80 { background-color: #ecfdf5 !important; }
+        body.pdf-exporting .bg-violet-50\/90, 
+        body.pdf-exporting .bg-violet-50\/80 { background-color: #f5f3ff !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-900 relative">
+    
+    <!-- ヘッダー (グラスモーフィズム) -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-40 transition-all">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-xl shadow-sm text-white">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                </div>
+                <h1 class="text-lg font-bold text-slate-800 tracking-tight">在籍状況ダッシュボード</h1>
+            </div>
+            <div class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full flex items-center gap-2">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                Excel Data
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- コントロールパネル -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 mb-8 transition-shadow hover:shadow-md">
+            <h2 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <i data-lucide="file-up" class="w-4 h-4 text-blue-500"></i>
+                データソースの選択
+            </h2>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="relative w-full sm:w-auto group">
+                    <input type="file" id="fileInput" accept=".xlsx, .xls" class="block w-full sm:w-auto text-sm text-slate-500
+                        file:mr-4 file:py-2.5 file:px-5
+                        file:rounded-xl file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-slate-100 file:text-slate-700
+                        hover:file:bg-slate-200 hover:file:text-slate-900 transition-all cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50
+                        focus:outline-none focus:ring-2 focus:ring-blue-500/20
+                    "/>
+                </div>
+                <div id="statusMessage" class="text-sm font-medium text-blue-600 hidden flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl">
+                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                    データを解析中...
+                </div>
+            </div>
+            <div id="errorMessage" class="mt-4 text-sm text-red-600 hidden flex items-start gap-2 bg-red-50 p-4 rounded-xl border border-red-100">
+                <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 shrink-0"></i>
+                <span id="errorText" class="font-medium">エラーが発生しました</span>
+            </div>
+        </div>
+
+        <!-- 結果表示エリア (初期は非表示) -->
+        <div id="resultsArea" class="hidden animate-fade-in pb-8">
+            
+            <!-- タブナビゲーションとツールバー -->
+            <div id="tabNavArea" class="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+                <div class="bg-slate-200/60 p-1 rounded-xl inline-flex space-x-1" id="tabContainer">
+                    <button data-tab="both" class="tab-btn active bg-white text-blue-600 shadow-sm rounded-lg px-6 py-2 text-sm font-bold transition-all whitespace-nowrap">
+                        すべて表示
+                    </button>
+                    <button data-tab="ginou" class="tab-btn text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg px-6 py-2 text-sm font-medium transition-all whitespace-nowrap">
+                        技能実習
+                    </button>
+                    <button data-tab="tokutei" class="tab-btn text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg px-6 py-2 text-sm font-medium transition-all whitespace-nowrap">
+                        特定技能
+                    </button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-xs text-slate-500 flex items-center gap-1 hidden md:flex">
+                        <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5"></i>
+                        人数をクリックで詳細表示
+                    </div>
+                    <!-- ダッシュボードPDF保存ボタン -->
+                    <button id="mainPdfDownloadBtn" onclick="downloadMainPDF()" class="flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50">
+                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                        <span>ダッシュボードをPDF保存 (A4)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PDF出力時のみ表示されるタイトル -->
+            <div id="mainPdfTitle" class="hidden text-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-800" id="mainPdfTitleText">在籍状況ダッシュボード</h2>
+            </div>
+
+            <!-- テーブルエリア (クロス集計) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden relative" id="mainTableWrapper">
+                <div class="overflow-x-auto overflow-y-auto max-h-[70vh] custom-scrollbar" id="mainTableScrollArea">
+                    <table class="min-w-full text-sm border-separate border-spacing-0 w-max" id="mainTableElement">
+                        <thead id="crossTableHead" class="bg-white">
+                            <!-- JSで描画 -->
+                        </thead>
+                        <tbody id="crossTableBody" class="bg-white">
+                            <!-- JSで描画 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- モーダルウィンドウ (詳細表示用) -->
+    <div id="detailModal" class="fixed inset-0 z-[100] hidden">
+        <!-- 背景オーバーレイ -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        
+        <!-- モーダル本体 -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <!-- モーダルヘッダー -->
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
+                        <i data-lucide="list-filter" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 leading-tight" id="modalTitle">内訳リスト</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5" id="modalSubtitle">詳細情報</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- PDF保存ボタン -->
+                    <button id="pdfDownloadBtn" onclick="downloadModalPDF()" class="flex items-center gap-1.5 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50">
+                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                        <span>PDF保存 (A4)</span>
+                    </button>
+                    <!-- 閉じるボタン -->
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-200 p-2 rounded-full transition-colors focus:outline-none">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 印刷（PDF出力）対象エリア -->
+            <div id="modalContentToPrint" class="flex-1 overflow-hidden flex flex-col bg-white">
+                
+                <!-- PDF出力時のみ表示するタイトル行 -->
+                <div id="printHeader" class="hidden px-6 py-4 bg-white text-center border-b border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800" id="printTitleText">タイトル</h2>
+                    <p class="text-sm text-slate-500 mt-1" id="printCountText">該当件数: 0 件</p>
+                </div>
+
+                <!-- コンテンツ (リスト) -->
+                <div id="modalScrollArea" class="flex-1 overflow-auto custom-scrollbar p-0 bg-white">
+                    <table class="min-w-full text-sm text-left" id="modalTableElement">
+                        <thead id="modalTableHead" class="text-xs text-slate-500 bg-slate-50 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap">企業名</th>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap">名前</th>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap">国籍</th>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap">ステータス</th>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap text-slate-400 text-xs">元シート名</th>
+                                <th class="px-6 py-3 font-bold border-b border-slate-200 whitespace-nowrap text-slate-400 text-xs text-right">Excel行</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody" class="divide-y divide-slate-100">
+                            <!-- JSで描画 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- フッター -->
+            <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                <div class="text-sm font-medium text-slate-600">
+                    該当件数: <span id="modalCount" class="font-bold text-blue-600 text-base">0</span> 件
+                </div>
+                <button onclick="closeModal()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors shadow-sm">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lucideアイコンの初期化
+        lucide.createIcons();
+
+        document.head.insertAdjacentHTML("beforeend", `<style>
+            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        </style>`);
+
+        // 集計対象の定義
+        const TARGETS_GINOU = [
+            "技能実習(1号)",
+            "技能実習(2号1年目)",
+            "技能実習(2号2年目)",
+            "技能実習(3号1年目)",
+            "技能実習(3号2年目)",
+            "入国前"
+        ];
+
+        const TARGETS_TOKUTEI = [
+            "特定活動",
+            "特定技能1号",
+            "特定技能2号",
+            "特定技能3号",
+            "入国前"
+        ];
+
+        const SHEETS_TOKUTEI = [
+            "特定技能◆その他◆",
+            "特定技能◆ユキグニファクトリー◆",
+            "特定技能◆ロイヤルデリカ◆",
+            "特定技能◆第一屋製パン◆"
+        ];
+
+        // メモリ上で保持するデータ
+        let parsedData = [];
+
+        // タブの状態管理
+        let currentTab = 'both';
+
+        // 要素の取得
+        const fileInput = document.getElementById('fileInput');
+        const statusMessage = document.getElementById('statusMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const resultsArea = document.getElementById('resultsArea');
+        const detailModal = document.getElementById('detailModal');
+
+        // タブボタンのイベントリスナー設定
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabId = e.target.dataset.tab;
+                switchTab(tabId);
+            });
         });
 
-        function setPrintDate() {
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const dateStr = `出力日: ${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
-            document.querySelectorAll('.print-date').forEach(el => { el.innerText = dateStr; });
-            return { year: now.getFullYear(), month: pad(now.getMonth()+1), date: pad(now.getDate()), hours: pad(now.getHours()), minutes: pad(now.getMinutes()) };
-        }
-
-        async function downloadPDF() {
-            if (companyMaster.length === 0) {
-                M.toast({html: 'データが読み込まれていません', classes: 'rounded orange'});
-                return;
-            }
+        function switchTab(tabId) {
+            currentTab = tabId;
             
-            M.toast({html: 'PDFを生成中... 少々お待ちください', classes: 'rounded teal'});
-            const d = setPrintDate();
-            document.body.classList.add('pdf-export-mode');
-
-            await new Promise(r => setTimeout(r, 1000));
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('portrait', 'mm', 'a4');
-                const tabs = ['tab-trainee', 'tab-ssw', 'tab-total'];
-                
-                for (let i = 0; i < tabs.length; i++) {
-                    const targetEl = document.getElementById(tabs[i]);
-                    if (!targetEl) continue;
-
-                    const canvas = await html2canvas(targetEl, { 
-                        scale: 2, 
-                        useCORS: true, 
-                        backgroundColor: '#ffffff',
-                        windowWidth: 1600 
-                    });
-
-                    if (i > 0) pdf.addPage();
-
-                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
-                    const pdfWidth = 190; 
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    
-                    let finalWidth = pdfWidth;
-                    let finalHeight = pdfHeight;
-                    if (finalHeight > 277) {
-                        const ratio = 277 / finalHeight;
-                        finalHeight = 277;
-                        finalWidth = finalWidth * ratio;
-                    }
-
-                    const xOffset = (210 - finalWidth) / 2;
-                    pdf.addImage(imgData, 'JPEG', xOffset, 10, finalWidth, finalHeight);
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabId) {
+                    btn.className = "tab-btn active bg-white text-blue-600 shadow-sm rounded-lg px-6 py-2 text-sm font-bold transition-all whitespace-nowrap";
+                } else {
+                    btn.className = "tab-btn text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg px-6 py-2 text-sm font-medium transition-all whitespace-nowrap";
                 }
+            });
 
-                pdf.save(`外国人材在籍数集計表_${d.year}${d.month}${d.date}${d.hours}${d.minutes}.pdf`);
-                M.toast({html: 'PDFの保存が完了しました', classes: 'rounded green'});
-            } catch (err) {
-                console.error(err);
-                M.toast({html: 'PDF生成エラーが発生しました', classes: 'rounded red'});
-            } finally {
-                document.body.classList.remove('pdf-export-mode');
-            }
+            updateDashboard();
         }
 
-        document.getElementById('excelFileInput').addEventListener('change', e => {
+        // ファイル入力のイベントリスナー
+        fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = evt => {
-                const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-                records = []; companyMaster = []; nationalityMaster = [];
-                workbook.SheetNames.forEach(name => {
-                    if (name.includes("技能実習") || name.includes("特定技能") || name.includes("特定活動")) {
-                        const data = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: "" });
-                        processSheetData(data, name);
+
+            errorMessage.classList.add('hidden');
+            resultsArea.classList.add('hidden');
+            resultsArea.classList.remove('animate-fade-in');
+            statusMessage.classList.remove('hidden');
+
+            setTimeout(() => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        
+                        parseWorkbookData(workbook);
+                        updateDashboard();
+                        
+                        statusMessage.classList.add('hidden');
+                        
+                        setTimeout(() => {
+                            resultsArea.classList.remove('hidden');
+                            resultsArea.classList.add('animate-fade-in');
+                        }, 50);
+
+                    } catch (err) {
+                        console.error(err);
+                        showError('ファイルの解析に失敗しました。正しいExcelファイルか確認してください。');
+                        statusMessage.classList.add('hidden');
                     }
-                });
-                companyMaster.sort(); nationalityMaster.sort();
-                renderMatrixTables();
-                M.toast({ html: '集計が完了しました', classes: 'rounded teal' });
-            };
-            reader.readAsArrayBuffer(file);
+                };
+                
+                reader.onerror = function() {
+                    showError('ファイルの読み込み中にエラーが発生しました。');
+                    statusMessage.classList.add('hidden');
+                };
+
+                reader.readAsArrayBuffer(file);
+            }, 300);
         });
 
-        function processSheetData(data, sheetName) {
-            let headerIdx = -1;
-            for (let i = 0; i < Math.min(25, data.length); i++) {
-                if(!data[i]) continue;
-                const rowStr = data[i].join('');
-                if (rowStr.includes('会社名') || rowStr.includes('企業名')) { headerIdx = i; break; }
-            }
-            if (headerIdx === -1) return;
-
-            const headers = data[headerIdx].map(h => String(h || '').replace(/\s/g, ''));
-            const colComp = headers.findIndex(h => h.includes('会社名') || h.includes('企業名'));
-
-            let colName, colNat, colStat;
-            const isSpecificSswSheet = ["特定技能◆その他◆", "特定技能◆ロイヤルデリカ◆", "特定技能◆第一屋製パン◆"].includes(sheetName);
-            const isYukiSheet = (sheetName === "特定技能◆ユキグニファクトリー◆");
-
-            if (isSpecificSswSheet) {
-                colName = 5; colNat = 11; colStat = 18;
-            } else if (isYukiSheet) {
-                colName = 6; colNat = 12; colStat = 19;
-            } else {
-                colName = headers.findIndex(h => h.includes('名前') || h.includes('氏名') || h === 'Name' || h.includes('実習生名'));
-                colNat = headers.findIndex(h => h === '国籍');
-                colStat = headers.findIndex(h => h.includes('ステータス') || h.includes('資格'));
-            }
-
-            if (colComp === -1) return;
-
-            const isTraineeSheet = sheetName.includes("技能実習");
-
-            for (let i = headerIdx + 1; i < data.length; i++) {
-                const row = data[i];
-                if (!row || !row[colComp] || String(row[colComp]).trim() === "") continue;
-
-                const statusRaw = String(row[colStat] || "");
-                // 除外判定：特定のキーワードが含まれる場合はスキップ
-                const exclude = [
-                    '帰国', '退職', '失踪', '辞退', 'キャンセル', 'ｷｬﾝｾﾙ', 
-                    'IVY', '他社へ', '他組合へ移管', '他監理'
-                ];
-                if (exclude.some(k => statusRaw.includes(k) && !statusRaw.includes('予定'))) continue;
-
-                let status = null;
-                const s = statusRaw.replace(/[Ａ-Ｚａ-ｚ０-９]/g, m => String.fromCharCode(m.charCodeAt(0) - 0xFEE0)).replace(/\s/g, '');
-
-                if (s.includes('入国前') && !s.includes('キャンセル')) {
-                    status = isTraineeSheet ? 'preEntry' : 'sswPreEntry';
-                } else if (isTraineeSheet) {
-                    if (s.includes('3号')) status = 'trainee3';
-                    else if (s.includes('2号')) status = 'trainee2';
-                    else status = 'trainee1';
-                } else {
-                    if (s.includes('特定活動')) status = 'designated';
-                    else if (s.includes('3号') || s.includes('3')) status = 'ssw3';
-                    else if (s.includes('2号') || s.includes('2')) status = 'ssw2';
-                    else status = 'ssw1';
-                }
-
-                if (status) {
-                    const nat = (colNat !== -1 && row[colNat]) ? String(row[colNat]).trim() : '不明';
-                    records.push({ 
-                        company: String(row[colComp]).trim(), 
-                        name: (colName !== -1 && row[colName]) ? String(row[colName]).trim() : '不明', 
-                        nationality: nat, 
-                        status, 
-                        count: 1, 
-                        sheet: sheetName, 
-                        rowNum: i + 1 
-                    });
-                    if (!companyMaster.includes(String(row[colComp]).trim())) companyMaster.push(String(row[colComp]).trim());
-                    if (nat !== '不明' && !nationalityMaster.includes(nat)) nationalityMaster.push(nat);
-                }
-            }
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorMessage.classList.remove('hidden');
         }
 
-        function renderMatrixTables() {
-            const nats = nationalityMaster.length > 0 ? nationalityMaster : ['国籍'];
-            const thNats = nats.map(n => `<th>${n}</th>`).join('');
-            const natsColSpan = nats.length;
+        // データパース処理 (詳細表示用に項目を追加)
+        function parseWorkbookData(workbook) {
+            parsedData = [];
 
-            document.getElementById('thead-trainee').innerHTML = `<tr><th rowspan="2" class="sticky-col-no">No.</th><th rowspan="2" class="sticky-col-company">企業名</th><th colspan="5">資格別(実習)</th><th colspan="${natsColSpan}">国籍別(実習)</th></tr><tr><th>入国前</th><th>1号</th><th>2号</th><th>3号</th><th class="total-col">小計</th>${thNats}</tr>`;
-            document.getElementById('thead-ssw').innerHTML = `<tr><th rowspan="2" class="sticky-col-no">No.</th><th rowspan="2" class="sticky-col-company">企業名</th><th colspan="6">資格別(特定)</th><th colspan="${natsColSpan}">国籍別(特定)</th></tr><tr><th>入国前</th><th>特定1</th><th>特定2</th><th>特定3</th><th>特活</th><th class="total-col">小計</th>${thNats}</tr>`;
-            document.getElementById('thead-total').innerHTML = `<tr><th rowspan="2" class="sticky-col-no">No.</th><th rowspan="2" class="sticky-col-company">企業名</th><th colspan="4">大項目</th><th colspan="${natsColSpan}">国籍別</th></tr><tr><th>実習計</th><th>特定計</th><th>特活</th><th class="total-col">総合計</th>${thNats}</tr>`;
+            // Helper: 名前の取得 (全角・半角スペースの揺らぎ対応)
+            const getName = (row) => (row['名　前'] || row['名前'] || row['氏名'] || '未設定').trim();
 
-            if (companyMaster.length === 0) {
-                const emptyMsg = `<tr><td colspan="10" style="padding:40px; text-align:center; color:#999;">Excelファイルを読み込んでください</td></tr>`;
-                document.getElementById('tbody-trainee').innerHTML = emptyMsg;
-                document.getElementById('tbody-ssw').innerHTML = emptyMsg;
-                document.getElementById('tbody-total').innerHTML = emptyMsg;
-                return;
-            };
-
-            const agg = {};
-            companyMaster.forEach(c => {
-                agg[c] = { preEntry:0, trainee1:0, trainee2:0, trainee3:0, sswPreEntry:0, ssw1:0, ssw2:0, ssw3:0, designated:0, nats_trainee: {}, nats_ssw: {}, nats_total: {} };
-                nats.forEach(n => { agg[c].nats_trainee[n]=0; agg[c].nats_ssw[n]=0; agg[c].nats_total[n]=0; });
-            });
-
-            records.forEach(r => {
-                agg[r.company][r.status] += r.count;
-                if (r.status === 'preEntry' || r.status.startsWith('trainee')) agg[r.company].nats_trainee[r.nationality] += r.count;
-                else agg[r.company].nats_ssw[r.nationality] += r.count;
-                agg[r.company].nats_total[r.nationality] += r.count;
-            });
-
-            const d = (val, comp, stat, nat, extraClass = '', isTh = false) => {
-                const tag = isTh ? 'th' : 'td';
-                if (val === 0) return `<${tag} class="${extraClass}"></${tag}>`;
-                return `<${tag} class="${extraClass} clickable-cell" onclick="showModal('${comp}', '${stat}', '${nat}')">${val}</${tag}>`;
-            };
-
-            let gPre=0, gT1=0, gT2=0, gT3=0, gTSub=0, gSPre=0, gS1=0, gS2=0, gS3=0, gDes=0, gSSub=0, gAll=0;
-            let gNTr={}, gNSSw={}, gNTot={};
-            nats.forEach(n => { gNTr[n]=0; gNSSw[n]=0; gNTot[n]=0; });
-
-            const stats = companyMaster.map(c => {
-                const r = agg[c];
-                const trSub = r.preEntry + r.trainee1 + r.trainee2 + r.trainee3;
-                const sswOnly = r.sswPreEntry + r.ssw1 + r.ssw2 + r.ssw3;
-                const sswSub = sswOnly + r.designated;
-                return { c, r, trSub, sswOnly, sswSub, all: trSub + sswSub };
-            });
-
-            stats.forEach(s => {
-                gPre += s.r.preEntry; gT1 += s.r.trainee1; gT2 += s.r.trainee2; gT3 += s.r.trainee3; gTSub += s.trSub;
-                gSPre += s.r.sswPreEntry; gS1 += s.r.ssw1; gS2 += s.r.ssw2; gS3 += s.r.ssw3; gDes += s.r.designated; gSSub += s.sswSub; gAll += s.all;
-                nats.forEach(n => {
-                    gNTr[n] += s.r.nats_trainee[n];
-                    gNSSw[n] += s.r.nats_ssw[n];
-                    gNTot[n] += s.r.nats_total[n];
+            // 1. 技能実習生の処理
+            const ginouSheetName = "技能実習生 (入国順)";
+            if (workbook.Sheets[ginouSheetName]) {
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[ginouSheetName], {range: 1, defval: ""});
+                rows.forEach((row, index) => {
+                    const status = (row['現在のステータス'] || '').trim();
+                    if (TARGETS_GINOU.includes(status)) {
+                        parsedData.push({
+                            type: 'ginou',
+                            company: (row['会社名'] || '').trim() || '未設定',
+                            status: status,
+                            country: (row['国籍'] || '').trim() || '未設定',
+                            name: getName(row),
+                            sheetName: ginouSheetName,
+                            rowNumber: index + 3 // 1行目タイトル、2行目ヘッダーなのでデータは3行目から
+                        });
+                    }
                 });
-            });
+            } else {
+                console.warn(`シート「${ginouSheetName}」が見つかりません。`);
+            }
 
-            const draw = (id, footerId, filter, sortKey, rowFn, footerRowFn) => {
-                let h = '', idx = 1;
-                stats.filter(filter).sort((a,b) => b[sortKey] - a[sortKey] || a.c.localeCompare(b.c,'ja')).forEach(s => h += rowFn(s, idx++));
-                document.getElementById(id).innerHTML = h;
-                document.getElementById(footerId).innerHTML = footerRowFn();
-            };
-
-            draw('tbody-trainee', 'tfoot-trainee', s => s.trSub > 0, 'trSub', (s, i) => {
-                let ns = ''; nats.forEach(n => ns += d(s.r.nats_trainee[n], s.c, 'trainee_all', n));
-                return `<tr><td class="sticky-col-no">${i}</td><td class="sticky-col-company">${s.c}</td>${d(s.r.preEntry,s.c,'preEntry','ALL')}${d(s.r.trainee1,s.c,'trainee1','ALL')}${d(s.r.trainee2,s.c,'trainee2','ALL')}${d(s.r.trainee3,s.c,'trainee3','ALL')}${d(s.trSub,s.c,'trainee_all','ALL','total-col')}${ns}</tr>`;
-            }, () => {
-                let ns = ''; nats.forEach(n => ns += d(gNTr[n], 'ALL', 'trainee_all', n, '', true));
-                return `<tr><th class="sticky-col-no"></th><th class="sticky-col-company">総計</th>${d(gPre,'ALL','preEntry','ALL','',true)}${d(gT1,'ALL','trainee1','ALL','',true)}${d(gT2,'ALL','trainee2','ALL','',true)}${d(gT3,'ALL','trainee3','ALL','',true)}${d(gTSub,'ALL','trainee_all','ALL','total-col',true)}${ns}</tr>`;
-            });
-
-            draw('tbody-ssw', 'tfoot-ssw', s => s.sswSub > 0, 'sswSub', (s, i) => {
-                let ns = ''; nats.forEach(n => ns += d(s.r.nats_ssw[n], s.c, 'ssw_all', n));
-                return `<tr><td class="sticky-col-no">${i}</td><td class="sticky-col-company">${s.c}</td>${d(s.r.sswPreEntry,s.c,'sswPreEntry','ALL')}${d(s.r.ssw1,s.c,'ssw1','ALL')}${d(s.r.ssw2,s.c,'ssw2','ALL')}${d(s.r.ssw3,s.c,'ssw3','ALL')}${d(s.r.designated,s.c,'designated','ALL')}${d(s.sswSub,s.c,'ssw_all','ALL','total-col')}${ns}</tr>`;
-            }, () => {
-                let ns = ''; nats.forEach(n => ns += d(gNSSw[n], 'ALL', 'ssw_all', n, '', true));
-                return `<tr><th class="sticky-col-no"></th><th class="sticky-col-company">総計</th>${d(gSPre,'ALL','sswPreEntry','ALL','',true)}${d(gS1,'ALL','ssw1','ALL','',true)}${d(gS2,'ALL','ssw2','ALL','',true)}${d(gS3,'ALL','ssw3','ALL','',true)}${d(gDes,'ALL','designated','ALL','',true)}${d(gSSub,'ALL','ssw_all','ALL','total-col',true)}${ns}</tr>`;
-            });
-
-            draw('tbody-total', 'tfoot-total', s => s.all > 0, 'all', (s, i) => {
-                let ns = ''; nats.forEach(n => ns += d(s.r.nats_total[n], s.c, 'all', n));
-                const sswTotalOnly = s.r.sswPreEntry + s.r.ssw1 + s.r.ssw2 + s.r.ssw3;
-                return `<tr><td class="sticky-col-no">${i}</td><td class="sticky-col-company">${s.c}</td>${d(s.trSub,s.c,'trainee_all','ALL')}${d(sswTotalOnly,s.c,'ssw_only','ALL')}${d(s.r.designated,s.c,'designated','ALL')}${d(s.all,s.c,'all','ALL','total-col')}${ns}</tr>`;
-            }, () => {
-                let ns = ''; nats.forEach(n => ns += d(gNTot[n], 'ALL', 'all', n, '', true));
-                return `<tr><th class="sticky-col-no"></th><th class="sticky-col-company">総計</th>${d(gTSub,'ALL','trainee_all','ALL','',true)}${d(gSPre+gS1+gS2+gS3,'ALL','ssw_only','ALL','',true)}${d(gDes,'ALL','designated','ALL','',true)}${d(gAll,'ALL','all','ALL','total-col',true)}${ns}</tr>`;
+            // 2. 特定技能の処理
+            SHEETS_TOKUTEI.forEach(sheetName => {
+                if (workbook.Sheets[sheetName]) {
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {range: 1, defval: ""});
+                    rows.forEach((row, index) => {
+                        const status = (row['(現在)ステータス'] || '').trim();
+                        if (TARGETS_TOKUTEI.includes(status)) {
+                            parsedData.push({
+                                type: 'tokutei',
+                                company: (row['会社名'] || '').trim() || '未設定',
+                                status: status,
+                                country: (row['国籍'] || '').trim() || '未設定',
+                                name: getName(row),
+                                sheetName: sheetName,
+                                rowNumber: index + 3
+                            });
+                        }
+                    });
+                } else {
+                    console.warn(`シート「${sheetName}」が見つかりません。`);
+                }
             });
         }
 
-        function showModal(comp, stat, nat) {
-            let f = records.filter(r => {
-                if (comp !== 'ALL' && r.company !== comp) return false;
-                if (nat !== 'ALL' && r.nationality !== nat) return false;
-                if (stat === 'trainee_all') return r.status === 'preEntry' || r.status.startsWith('trainee');
-                if (stat === 'ssw_only') return r.status === 'sswPreEntry' || r.status.startsWith('ssw');
-                if (stat === 'ssw_all') return r.status === 'sswPreEntry' || r.status.startsWith('ssw') || r.status === 'designated';
-                if (stat === 'all') return true;
-                return r.status === stat;
+        // 引数の文字列をエスケープする関数（onclickへの埋め込み用）
+        function escapeArgs(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // ダッシュボード更新ロジック (クロス集計表の生成)
+        function updateDashboard() {
+            const targetData = parsedData.filter(d => currentTab === 'both' || d.type === currentTab);
+
+            const companySet = new Set(targetData.map(d => d.company));
+            let companies = Array.from(companySet);
+
+            let countryTotals = {};
+            targetData.forEach(d => {
+                countryTotals[d.country] = (countryTotals[d.country] || 0) + 1;
             });
+            const countriesList = Object.keys(countryTotals).sort((a, b) => countryTotals[b] - countryTotals[a]);
+
+            const counts = {}; 
+            const totalCounts = { total: 0, status: {}, country: {} }; 
+
+            companies.forEach(c => {
+                counts[c] = { total: 0, status: {}, country: {} };
+                TARGETS_GINOU.forEach(s => counts[c].status[s] = 0);
+                TARGETS_TOKUTEI.forEach(s => counts[c].status[s] = 0);
+                countriesList.forEach(ct => counts[c].country[ct] = 0);
+            });
+            TARGETS_GINOU.forEach(s => totalCounts.status[s] = 0);
+            TARGETS_TOKUTEI.forEach(s => totalCounts.status[s] = 0);
+            countriesList.forEach(ct => totalCounts.country[ct] = 0);
+
+            targetData.forEach(d => {
+                const c = d.company;
+                counts[c].total++;
+                totalCounts.total++;
+                
+                if (TARGETS_GINOU.includes(d.status) || TARGETS_TOKUTEI.includes(d.status)) {
+                    counts[c].status[d.status]++;
+                    totalCounts.status[d.status]++;
+                }
+                
+                if (countriesList.includes(d.country)) {
+                    counts[c].country[d.country]++;
+                    totalCounts.country[d.country]++;
+                }
+            });
+
+            companies.sort((a, b) => {
+                const totalA = counts[a].total;
+                const totalB = counts[b].total;
+                if (totalB !== totalA) {
+                    return totalB - totalA;
+                }
+                return a.localeCompare(b, 'ja');
+            });
+
+            // --- Thead作成 ---
+            let theadHtml = `<tr>
+                <th rowspan="2" class="sticky left-0 top-0 bg-white px-5 text-left font-bold text-slate-800 border-b border-r border-slate-200 z-[50] w-[260px] min-w-[260px] max-w-[260px] sticky-shadow-right align-middle">会社名</th>
+                <th rowspan="2" class="sticky left-[260px] top-0 bg-slate-50 px-5 text-right font-extrabold text-blue-600 border-b border-r border-slate-200 z-[50] w-[90px] min-w-[90px] max-w-[90px] sticky-shadow-right align-middle">合計</th>`;
             
-            currentModalFilteredData = f;
-            currentModalTitle = `${comp === 'ALL' ? '全企業' : comp}${nat === 'ALL' ? '' : `_${nat}`}_${getStatusLabel(stat)}`;
+            let statusHeader1 = '';
+            let statusHeader2 = '';
 
-            document.getElementById('modalTitle').innerText = `${comp === 'ALL' ? '全企業' : comp}${nat === 'ALL' ? '' : ` (${nat})`} 詳細（${f.length}名）`;
-            let h = '';
-            f.forEach((r, idx) => {
-                h += `<tr><td>${idx+1}</td><td>${r.company}</td><td>${r.name}</td><td>${r.nationality}</td><td>${getStatusLabel(r.status)}</td><td>${r.sheet}</td><td>${r.rowNum}</td></tr>`;
+            if (currentTab === 'both' || currentTab === 'ginou') {
+                statusHeader1 += `<th colspan="${TARGETS_GINOU.length}" class="sticky top-0 bg-blue-50 px-4 h-[44px] text-center font-bold text-blue-800 border-b border-r border-slate-200 z-30">技能実習 ステータス</th>`;
+                TARGETS_GINOU.forEach((s, idx) => {
+                    let borderClass = 'border-r border-slate-200';
+                    let displayName = s.replace(/([(（])/g, '<br>$1');
+                    statusHeader2 += `<th class="sticky top-[44px] bg-white px-3 py-1.5 text-center text-xs font-semibold text-slate-600 border-b ${borderClass} z-30 whitespace-nowrap min-w-[5rem] leading-snug">${displayName}</th>`;
+                });
+            }
+
+            if (currentTab === 'both' || currentTab === 'tokutei') {
+                statusHeader1 += `<th colspan="${TARGETS_TOKUTEI.length}" class="sticky top-0 bg-emerald-50 px-4 h-[44px] text-center font-bold text-emerald-800 border-b border-r border-slate-200 z-30">特定技能 ステータス</th>`;
+                TARGETS_TOKUTEI.forEach((s, idx) => {
+                    let borderClass = 'border-r border-slate-200';
+                    let displayName = s.replace(/([(（])/g, '<br>$1');
+                    statusHeader2 += `<th class="sticky top-[44px] bg-white px-3 py-1.5 text-center text-xs font-semibold text-slate-600 border-b ${borderClass} z-30 whitespace-nowrap min-w-[5rem] leading-snug">${displayName}</th>`;
+                });
+            }
+
+            statusHeader1 += `<th colspan="${countriesList.length}" class="sticky top-0 bg-violet-50 px-4 h-[44px] text-center font-bold text-violet-800 border-b border-slate-200 z-30">国別在籍人数</th>`;
+            countriesList.forEach((c, idx) => {
+                let borderClass = idx === countriesList.length - 1 ? 'border-r-0' : 'border-r border-slate-200';
+                let displayName = c.replace(/([(（])/g, '<br>$1');
+                statusHeader2 += `<th class="sticky top-[44px] bg-white px-3 py-1.5 text-center text-xs font-semibold text-slate-600 border-b ${borderClass} z-30 whitespace-nowrap min-w-[5rem] leading-snug">${displayName}</th>`;
             });
-            document.getElementById('modalTableBody').innerHTML = h;
-            M.Modal.getInstance(document.getElementById('detailModal')).open();
+
+            theadHtml += statusHeader1 + `</tr><tr>` + statusHeader2 + `</tr>`;
+            document.getElementById('crossTableHead').innerHTML = theadHtml;
+
+            // --- Tbody作成 ---
+            let tbodyHtml = '';
+
+            companies.forEach(c => {
+                const escCompany = escapeArgs(c);
+                let trHtml = `<tr class="hover:bg-slate-50 group transition-colors duration-150">`;
+                
+                // 会社名と合計
+                trHtml += `<td class="sticky left-0 bg-white px-5 py-3 border-b border-r border-slate-200 z-20 group-hover:bg-slate-50 sticky-shadow-right truncate font-medium text-slate-700 max-w-[260px]" title="${c}">${c}</td>`;
+                trHtml += `<td class="sticky left-[260px] bg-slate-50 px-5 py-3 border-b border-r border-slate-200 z-20 text-right font-bold group-hover:bg-slate-100 sticky-shadow-right text-blue-600 max-w-[90px] ${counts[c].total > 0 ? 'clickable-cell' : ''}" ${counts[c].total > 0 ? `onclick="showDetails('${escCompany}', 'total', null, '${escCompany} 全員')"` : ''}>${counts[c].total}</td>`;
+                
+                // 技能実習列
+                if (currentTab === 'both' || currentTab === 'ginou') {
+                    TARGETS_GINOU.forEach((s) => {
+                        const cnt = counts[c].status[s];
+                        const escStatus = escapeArgs(s);
+                        trHtml += `<td class="px-4 py-3 border-b border-r border-slate-100 text-center ${cnt>0 ? 'text-slate-800 font-semibold clickable-cell' : 'text-slate-300 font-light'}" ${cnt>0 ? `onclick="showDetails('${escCompany}', 'status', '${escStatus}', '${escCompany} / ${escStatus}')"` : ''}>${cnt>0 ? cnt : '-'}</td>`;
+                    });
+                }
+                
+                // 特定技能列
+                if (currentTab === 'both' || currentTab === 'tokutei') {
+                    TARGETS_TOKUTEI.forEach((s) => {
+                        const cnt = counts[c].status[s];
+                        const escStatus = escapeArgs(s);
+                        trHtml += `<td class="px-4 py-3 border-b border-r border-slate-100 text-center ${cnt>0 ? 'text-slate-800 font-semibold clickable-cell' : 'text-slate-300 font-light'}" ${cnt>0 ? `onclick="showDetails('${escCompany}', 'status', '${escStatus}', '${escCompany} / ${escStatus}')"` : ''}>${cnt>0 ? cnt : '-'}</td>`;
+                    });
+                }
+                
+                // 国籍列
+                countriesList.forEach((ct, idx) => {
+                    const cnt = counts[c].country[ct];
+                    const escCountry = escapeArgs(ct);
+                    let borderClass = idx === countriesList.length - 1 ? 'border-r-0' : 'border-r border-slate-100';
+                    trHtml += `<td class="px-4 py-3 border-b ${borderClass} text-center ${cnt>0 ? 'text-slate-800 font-semibold clickable-cell' : 'text-slate-300 font-light'}" ${cnt>0 ? `onclick="showDetails('${escCompany}', 'country', '${escCountry}', '${escCompany} / ${escCountry}')"` : ''}>${cnt>0 ? cnt : '-'}</td>`;
+                });
+                
+                trHtml += `</tr>`;
+                tbodyHtml += trHtml;
+            });
+
+            // 総合計行 (最下部)
+            let totalHtml = `<tr class="bg-slate-100">`;
+            totalHtml += `<td class="sticky left-0 bg-slate-100 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 sticky-shadow-right text-slate-800 font-bold max-w-[260px]">総合計</td>`;
+            totalHtml += `<td class="sticky left-[260px] bg-slate-200 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 text-right sticky-shadow-right text-blue-700 font-extrabold text-base max-w-[90px] ${totalCounts.total > 0 ? 'clickable-cell' : ''}" ${totalCounts.total > 0 ? `onclick="showDetails('ALL', 'total', null, '全対象者')"` : ''}>${totalCounts.total}</td>`;
+
+            if (currentTab === 'both' || currentTab === 'ginou') {
+                TARGETS_GINOU.forEach((s) => {
+                    const cnt = totalCounts.status[s];
+                    const escStatus = escapeArgs(s);
+                    totalHtml += `<td class="px-4 py-4 border-t-2 border-slate-300 border-r border-slate-200 text-center text-blue-800 font-bold ${cnt>0 ? 'clickable-cell' : ''}" ${cnt>0 ? `onclick="showDetails('ALL', 'status', '${escStatus}', '全体 / ${escStatus}')"` : ''}>${cnt}</td>`;
+                });
+            }
+            if (currentTab === 'both' || currentTab === 'tokutei') {
+                TARGETS_TOKUTEI.forEach((s) => {
+                    const cnt = totalCounts.status[s];
+                    const escStatus = escapeArgs(s);
+                    totalHtml += `<td class="px-4 py-4 border-t-2 border-slate-300 border-r border-slate-200 text-center text-emerald-800 font-bold ${cnt>0 ? 'clickable-cell' : ''}" ${cnt>0 ? `onclick="showDetails('ALL', 'status', '${escStatus}', '全体 / ${escStatus}')"` : ''}>${cnt}</td>`;
+                });
+            }
+            countriesList.forEach((ct, idx) => {
+                const cnt = totalCounts.country[ct];
+                const escCountry = escapeArgs(ct);
+                let borderClass = idx === countriesList.length - 1 ? 'border-r-0' : 'border-r border-slate-200';
+                totalHtml += `<td class="px-4 py-4 border-t-2 border-slate-300 ${borderClass} text-center text-violet-800 font-bold ${cnt>0 ? 'clickable-cell' : ''}" ${cnt>0 ? `onclick="showDetails('ALL', 'country', '${escCountry}', '全体 / ${escCountry}')"` : ''}>${cnt}</td>`;
+            });
+
+            totalHtml += `</tr>`;
+            tbodyHtml += totalHtml;
+
+            document.getElementById('crossTableBody').innerHTML = tbodyHtml;
+            
+            lucide.createIcons();
         }
 
-        function exportModalToExcel() {
-            if (currentModalFilteredData.length === 0) return;
-            const now = new Date();
-            const timeStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-            const exportData = currentModalFilteredData.map((r, idx) => ({
-                'No': idx + 1,
-                '企業名': r.company,
-                '名前': r.name,
-                '国籍': r.nationality,
-                '在留資格': getStatusLabel(r.status),
-                '元シート名': r.sheet,
-                'Excel行番号': r.rowNum
-            }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "詳細一覧");
-            const filename = `詳細一覧_${currentModalTitle}_${timeStr}.xlsx`;
-            XLSX.writeFile(wb, filename);
-            M.toast({ html: 'Excelファイルを出力しました', classes: 'rounded green' });
+        // ==========================================
+        // モーダル詳細表示の制御
+        // ==========================================
+        function showDetails(company, filterType, filterValue, titleStr) {
+            let filtered = parsedData.filter(d => currentTab === 'both' || d.type === currentTab);
+
+            if (company !== 'ALL') {
+                filtered = filtered.filter(d => d.company === company);
+            }
+
+            if (filterType === 'status') {
+                filtered = filtered.filter(d => d.status === filterValue);
+            } else if (filterType === 'country') {
+                filtered = filtered.filter(d => d.country === filterValue);
+            } else if (filterType === 'type') {
+                filtered = filtered.filter(d => d.type === filterValue);
+            }
+
+            document.getElementById('modalTitle').textContent = titleStr;
+            document.getElementById('modalCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">該当するデータがありません</td></tr>`;
+            } else {
+                filtered.forEach(d => {
+                    let badgeClass = d.type === 'ginou' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    
+                    const trHtml = `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-3 border-b border-slate-100 font-medium text-slate-700 whitespace-normal break-words" title="${d.company}">${d.company}</td>
+                            <td class="px-6 py-3 border-b border-slate-100 font-bold text-slate-900">${d.name}</td>
+                            <td class="px-6 py-3 border-b border-slate-100 text-slate-700">${d.country}</td>
+                            <td class="px-6 py-3 border-b border-slate-100">
+                                <span class="border px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap ${badgeClass}">${d.status}</span>
+                            </td>
+                            <td class="px-6 py-3 border-b border-slate-100 text-slate-400 text-xs whitespace-normal break-words" title="${d.sheetName}">${d.sheetName}</td>
+                            <td class="px-6 py-3 border-b border-slate-100 text-slate-400 text-xs text-right font-mono">${d.rowNumber}</td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', trHtml);
+                });
+            }
+
+            detailModal.classList.remove('hidden');
         }
 
-        function getStatusLabel(s) {
-            const l = { 
-                'preEntry': '入国前(実習)', 'sswPreEntry': '入国前(特定)', 
-                'trainee1': '実習1号', 'trainee2': '実習2号', 'trainee3': '実習3号', 
-                'ssw1': '特定1号', 'ssw2': '特定2号', 'ssw3': '特定3号', 
-                'designated': '特定活動', 'trainee_all': '技能実習計', 
-                'ssw_only': '特定技能計', 'ssw_all': '特定・活動計', 'all': '総合計' 
-            };
-            return l[s] || s;
+        function closeModal() {
+            detailModal.classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !detailModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // ==========================================
+        // PDF出力処理 (モーダル：A4縦 1枚)
+        // ==========================================
+        async function downloadModalPDF() {
+            const btn = document.getElementById('pdfDownloadBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>生成中...</span>';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            // 透過無効化クラスを一時的に付与（文字をくっきりさせるため）
+            document.body.classList.add('pdf-exporting');
+            
+            const target = document.getElementById('modalContentToPrint');
+            const scrollArea = document.getElementById('modalScrollArea');
+            const printHeader = document.getElementById('printHeader');
+            const tableHead = document.getElementById('modalTableHead');
+            
+            const originalMaxHeight = scrollArea.style.maxHeight;
+            const originalOverflowX = scrollArea.style.overflowX;
+            const originalHeadPosition = tableHead.style.position;
+            const originalTargetWidth = target.style.width;
+            
+            document.getElementById('printTitleText').textContent = document.getElementById('modalTitle').textContent;
+            document.getElementById('printCountText').textContent = `該当件数: ${document.getElementById('modalCount').textContent} 件`;
+            
+            // 表がはみ出さないよう横スクロールを解除し、幅を中身に合わせる
+            scrollArea.style.maxHeight = 'none';
+            scrollArea.style.overflowX = 'visible';
+            tableHead.style.position = 'static'; 
+            target.style.width = 'max-content';
+            printHeader.classList.remove('hidden');
+
+            try {
+                await new Promise(r => setTimeout(r, 200));
+
+                const canvas = await html2canvas(target, { 
+                    scale: 3, // 解像度を上げて文字をくっきりさせる
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    windowWidth: target.scrollWidth,
+                    width: target.scrollWidth
+                });
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const pdfW = pdf.internal.pageSize.getWidth();
+                const pdfH = pdf.internal.pageSize.getHeight();
+                const margin = 10;
+                
+                const maxW = pdfW - margin * 2;
+                const maxH = pdfH - margin * 2;
+                const imgW = canvas.width;
+                const imgH = canvas.height;
+                const ratio = Math.min(maxW / imgW, maxH / imgH);
+                
+                const renderW = imgW * ratio;
+                const renderH = imgH * ratio;
+                const x = margin + (maxW - renderW) / 2;
+                const y = margin;
+                
+                // JPEGのノイズを無くすため、PNG形式で出力
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', x, y, renderW, renderH, undefined, 'FAST');
+                
+                const title = document.getElementById('modalTitle').textContent.replace(/\//g, '_').replace(/ /g, '');
+                pdf.save(`内訳リスト_${title}.pdf`);
+                
+            } catch (e) {
+                console.error(e);
+                alert('PDF作成中にエラーが発生しました。');
+            } finally {
+                // UI復元
+                scrollArea.style.maxHeight = originalMaxHeight;
+                scrollArea.style.overflowX = originalOverflowX;
+                tableHead.style.position = originalHeadPosition;
+                target.style.width = originalTargetWidth;
+                printHeader.classList.add('hidden');
+                document.body.classList.remove('pdf-exporting');
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        // ==========================================
+        // PDF出力処理 (メインダッシュボード：A4縦 1枚)
+        // ==========================================
+        async function downloadMainPDF() {
+            const btn = document.getElementById('mainPdfDownloadBtn');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>生成中...</span>';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            // 透過無効化クラスを一時的に付与（文字をくっきりさせるため）
+            document.body.classList.add('pdf-exporting');
+            
+            const target = document.getElementById('resultsArea');
+            const navArea = document.getElementById('tabNavArea');
+            const mainPdfTitle = document.getElementById('mainPdfTitle');
+            const tableContainer = document.getElementById('mainTableScrollArea');
+            
+            // 印刷時の表示調整 (タブやボタンを隠し、タイトルを表示)
+            const originalNavDisplay = navArea.style.display;
+            navArea.style.display = 'none';
+            mainPdfTitle.classList.remove('hidden');
+
+            let tabNameText = "すべて表示";
+            if(currentTab === 'ginou') tabNameText = "技能実習";
+            if(currentTab === 'tokutei') tabNameText = "特定技能";
+            document.getElementById('mainPdfTitleText').textContent = `在籍状況ダッシュボード (${tabNameText})`;
+            
+            // 全体を描画するためスクロール制限と幅制限を解除
+            const originalTableMaxHeight = tableContainer.style.maxHeight;
+            const originalTableOverflowX = tableContainer.style.overflowX;
+            const originalTargetWidth = target.style.width;
+
+            tableContainer.style.maxHeight = 'none';
+            tableContainer.style.overflowX = 'visible';
+            target.style.width = 'max-content';
+
+            // html2canvas のズレ防止のため sticky 要素を一時的に static に変更
+            const stickyElements = target.querySelectorAll('.sticky');
+            const originalStickyStyles = [];
+            stickyElements.forEach(el => {
+                originalStickyStyles.push({ el: el, position: el.style.position });
+                el.style.position = 'static';
+            });
+
+            try {
+                // DOMの更新を待つ
+                await new Promise(r => setTimeout(r, 200));
+
+                const canvas = await html2canvas(target, { 
+                    scale: 3, // 解像度を上げて文字をくっきりさせる
+                    useCORS: true,
+                    backgroundColor: '#ffffff', // 背景を完全な白に
+                    windowWidth: target.scrollWidth,
+                    width: target.scrollWidth
+                });
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4'); // 'p'=縦, 'a4'=A4サイズ
+                
+                const pdfW = pdf.internal.pageSize.getWidth();
+                const pdfH = pdf.internal.pageSize.getHeight();
+                const margin = 10;
+                
+                const maxW = pdfW - margin * 2;
+                const maxH = pdfH - margin * 2;
+                const imgW = canvas.width;
+                const imgH = canvas.height;
+                
+                // 強制的にA4の1枚に収めるための縮小率
+                const ratio = Math.min(maxW / imgW, maxH / imgH);
+                
+                const renderW = imgW * ratio;
+                const renderH = imgH * ratio;
+                const x = margin + (maxW - renderW) / 2;
+                const y = margin;
+                
+                // JPEGのノイズを無くすため、PNG形式で出力
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', x, y, renderW, renderH, undefined, 'FAST');
+                
+                pdf.save(`在籍状況ダッシュボード_${tabNameText}.pdf`);
+                
+            } catch (e) {
+                console.error(e);
+                alert('PDF作成中にエラーが発生しました。');
+            } finally {
+                // UIを元の状態に戻す
+                navArea.style.display = originalNavDisplay;
+                mainPdfTitle.classList.add('hidden');
+                
+                tableContainer.style.maxHeight = originalTableMaxHeight;
+                tableContainer.style.overflowX = originalTableOverflowX;
+                target.style.width = originalTargetWidth;
+
+                originalStickyStyles.forEach(item => {
+                    item.el.style.position = item.position;
+                });
+
+                document.body.classList.remove('pdf-exporting');
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
         }
     </script>
 </body>
