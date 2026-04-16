@@ -6,7 +6,7 @@
     <title>在籍状況集計ダッシュボード</title>
     <!-- Tailwind CSS (スタイリング用) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (Excel読み込み用) -->
+    <!-- SheetJS (Excel読み込み/出力用) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <!-- Lucide Icons (アイコン用) -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -57,10 +57,12 @@
                 </div>
                 <h1 class="text-lg font-bold text-slate-800 tracking-tight">在籍状況ダッシュボード</h1>
             </div>
-            <div class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full flex items-center gap-2">
-                <i data-lucide="info" class="w-4 h-4"></i>
-                Excel Data
-            </div>
+            
+            <!-- Excel出力ボタン (初期状態は disabled) -->
+            <button id="excelDownloadBtn" onclick="downloadExcel()" disabled class="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-700 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                <span>Excel出力</span>
+            </button>
         </div>
     </header>
 
@@ -264,6 +266,7 @@
         const errorText = document.getElementById('errorText');
         const resultsArea = document.getElementById('resultsArea');
         const detailModal = document.getElementById('detailModal');
+        const excelDownloadBtn = document.getElementById('excelDownloadBtn');
 
         // タブボタンのイベントリスナー設定
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -309,6 +312,7 @@
                         updateDashboard();
                         
                         statusMessage.classList.add('hidden');
+                        excelDownloadBtn.disabled = false; // エクセル出力ボタンを有効化
                         
                         setTimeout(() => {
                             resultsArea.classList.remove('hidden');
@@ -448,8 +452,9 @@
 
             // --- Thead作成 ---
             let theadHtml = `<tr>
-                <th rowspan="2" class="sticky left-0 top-0 bg-white px-5 text-left font-bold text-slate-800 border-b border-r border-slate-200 z-[50] w-[260px] min-w-[260px] max-w-[260px] sticky-shadow-right align-middle">会社名</th>
-                <th rowspan="2" class="sticky left-[260px] top-0 bg-slate-50 px-5 text-right font-extrabold text-blue-600 border-b border-r border-slate-200 z-[50] w-[90px] min-w-[90px] max-w-[90px] sticky-shadow-right align-middle">合計</th>`;
+                <th rowspan="2" class="sticky left-0 top-0 bg-white px-3 text-center font-bold text-slate-800 border-b border-r border-slate-200 z-[50] w-[60px] min-w-[60px] max-w-[60px] align-middle">No.</th>
+                <th rowspan="2" class="sticky left-[60px] top-0 bg-white px-5 text-left font-bold text-slate-800 border-b border-r border-slate-200 z-[50] w-[260px] min-w-[260px] max-w-[260px] sticky-shadow-right align-middle">会社名</th>
+                <th rowspan="2" class="sticky left-[320px] top-0 bg-slate-50 px-5 text-right font-extrabold text-blue-600 border-b border-r border-slate-200 z-[50] w-[90px] min-w-[90px] max-w-[90px] sticky-shadow-right align-middle">合計</th>`;
             
             let statusHeader1 = '';
             let statusHeader2 = '';
@@ -485,13 +490,14 @@
             // --- Tbody作成 ---
             let tbodyHtml = '';
 
-            companies.forEach(c => {
+            companies.forEach((c, idx) => {
                 const escCompany = escapeArgs(c);
                 let trHtml = `<tr class="hover:bg-slate-50 group transition-colors duration-150">`;
                 
-                // 会社名と合計
-                trHtml += `<td class="sticky left-0 bg-white px-5 py-3 border-b border-r border-slate-200 z-20 group-hover:bg-slate-50 sticky-shadow-right truncate font-medium text-slate-700 max-w-[260px]" title="${c}">${c}</td>`;
-                trHtml += `<td class="sticky left-[260px] bg-slate-50 px-5 py-3 border-b border-r border-slate-200 z-20 text-right font-bold group-hover:bg-slate-100 sticky-shadow-right text-blue-600 max-w-[90px] ${counts[c].total > 0 ? 'clickable-cell' : ''}" ${counts[c].total > 0 ? `onclick="showDetails('${escCompany}', 'total', null, '${escCompany} 全員')"` : ''}>${counts[c].total}</td>`;
+                // No, 会社名と合計
+                trHtml += `<td class="sticky left-0 bg-white px-3 py-3 border-b border-r border-slate-200 z-20 group-hover:bg-slate-50 text-center text-slate-500 font-mono w-[60px] max-w-[60px]">${idx + 1}</td>`;
+                trHtml += `<td class="sticky left-[60px] bg-white px-5 py-3 border-b border-r border-slate-200 z-20 group-hover:bg-slate-50 sticky-shadow-right truncate font-medium text-slate-700 max-w-[260px]" title="${c}">${c}</td>`;
+                trHtml += `<td class="sticky left-[320px] bg-slate-50 px-5 py-3 border-b border-r border-slate-200 z-20 text-right font-bold group-hover:bg-slate-100 sticky-shadow-right text-blue-600 max-w-[90px] ${counts[c].total > 0 ? 'clickable-cell' : ''}" ${counts[c].total > 0 ? `onclick="showDetails('${escCompany}', 'total', null, '${escCompany} 全員')"` : ''}>${counts[c].total}</td>`;
                 
                 // 技能実習列
                 if (currentTab === 'both' || currentTab === 'ginou') {
@@ -525,8 +531,9 @@
 
             // 総合計行 (最下部)
             let totalHtml = `<tr class="bg-slate-100">`;
-            totalHtml += `<td class="sticky left-0 bg-slate-100 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 sticky-shadow-right text-slate-800 font-bold max-w-[260px]">総合計</td>`;
-            totalHtml += `<td class="sticky left-[260px] bg-slate-200 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 text-right sticky-shadow-right text-blue-700 font-extrabold text-base max-w-[90px] ${totalCounts.total > 0 ? 'clickable-cell' : ''}" ${totalCounts.total > 0 ? `onclick="showDetails('ALL', 'total', null, '全対象者')"` : ''}>${totalCounts.total}</td>`;
+            totalHtml += `<td class="sticky left-0 bg-slate-100 px-3 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 text-center text-slate-500 font-bold w-[60px] max-w-[60px]">-</td>`;
+            totalHtml += `<td class="sticky left-[60px] bg-slate-100 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 sticky-shadow-right text-slate-800 font-bold max-w-[260px]">総合計</td>`;
+            totalHtml += `<td class="sticky left-[320px] bg-slate-200 px-5 py-4 border-t-2 border-slate-300 border-r border-slate-200 z-20 text-right sticky-shadow-right text-blue-700 font-extrabold text-base max-w-[90px] ${totalCounts.total > 0 ? 'clickable-cell' : ''}" ${totalCounts.total > 0 ? `onclick="showDetails('ALL', 'total', null, '全対象者')"` : ''}>${totalCounts.total}</td>`;
 
             if (currentTab === 'both' || currentTab === 'ginou') {
                 TARGETS_GINOU.forEach((s) => {
@@ -615,6 +622,32 @@
                 closeModal();
             }
         });
+
+        // ==========================================
+        // Excel出力処理 (メインダッシュボードの表)
+        // ==========================================
+        function downloadExcel() {
+            try {
+                // 出力対象のテーブル要素を取得
+                const table = document.getElementById('mainTableElement');
+                
+                // SheetJSを使ってテーブル要素からワークブックを生成
+                // raw: true にすることで、数字が文字列になるなどの意図しない変換を防ぐ
+                const wb = XLSX.utils.table_to_book(table, { raw: true });
+                
+                // 現在のタブ名をファイル名に反映
+                let tabNameText = "すべて表示";
+                if(currentTab === 'ginou') tabNameText = "技能実習";
+                if(currentTab === 'tokutei') tabNameText = "特定技能";
+
+                // Excelファイルとして保存
+                XLSX.writeFile(wb, `在籍状況ダッシュボード_${tabNameText}.xlsx`);
+                
+            } catch (e) {
+                console.error(e);
+                alert('Excel出力中にエラーが発生しました。');
+            }
+        }
 
         // ==========================================
         // PDF出力処理 (モーダル：A4縦 1枚)
